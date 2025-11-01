@@ -274,7 +274,7 @@
 
     const C0 = find(s0).cum;
     const C1 = find(s1).cum;
-    const dupes = Math.max(0, C1 - C0);
+    const dupes = Math.ceil(frags/10);
     const frags = dupes * 10;
 
     const mult = 1 + (deltaPct/100);
@@ -306,6 +306,25 @@
   document.getElementById('reset').addEventListener('click', resetAll);
   document.getElementById('toStar').addEventListener('change', updateStarIcon);
   updateStarIcon();
+
+var STEPS=[
+  {star:0.0,frag:0},
+  {star:0.2,frag:2},{star:0.4,frag:2},{star:0.6,frag:2},{star:0.8,frag:2},
+  {star:1.0,frag:5},{star:1.2,frag:5},{star:1.4,frag:5},{star:1.6,frag:5},{star:1.8,frag:5},
+  {star:2.0,frag:15},{star:2.2,frag:15},{star:2.4,frag:15},{star:2.6,frag:15},{star:2.8,frag:15},
+  {star:3.0,frag:40},{star:3.2,frag:40},{star:3.4,frag:40},{star:3.6,frag:40},{star:3.8,frag:40},
+  {star:4.0,frag:100},{star:4.2,frag:100}
+];
+function fragmentsBetween(a,b){
+  if(b<=a) return 0;
+  var sum=0;
+  for(var i=0;i<STEPS.length;i++){
+    var r=STEPS[i];
+    if(r.star>a && r.star<=b) sum += (r.frag||0);
+  }
+  return sum;
+}
+
 </script>
 </body>
 </html>

@@ -202,23 +202,22 @@
     {star:4.0, cum:215, pct:250},
     {star:4.2, cum:266, pct:259},
   ];
-/* ==== FRAGMENT COSTS (no UI changes) ==== */
-var STEPS=[
-  {star:0.2,frag:2},{star:0.4,frag:2},{star:0.6,frag:2},{star:0.8,frag:2},
-  {star:1.0,frag:5},{star:1.2,frag:5},{star:1.4,frag:5},{star:1.6,frag:5},{star:1.8,frag:5},
-  {star:2.0,frag:15},{star:2.2,frag:15},{star:2.4,frag:15},{star:2.6,frag:15},{star:2.8,frag:15},
-  {star:3.0,frag:40},{star:3.2,frag:40},{star:3.4,frag:40},{star:3.6,frag:40},{star:3.8,frag:40},
-  {star:4.0,frag:100},{star:4.2,frag:100}
-];
-function fragmentsBetween(a,b){
-  if(b<=a) return 0;
-  var sum=0;
-  for(var i=0;i<STEPS.length;i++){
-    var r=STEPS[i];
-    if(r.star>a && r.star<=b) sum+=r.frag;
+  // === Fragment step costs (as confirmed) ===
+  const STEPS = [
+    {star:0.2,frag:2},{star:0.4,frag:2},{star:0.6,frag:2},{star:0.8,frag:2},
+    {star:1.0,frag:5},{star:1.2,frag:5},{star:1.4,frag:5},{star:1.6,frag:5},{star:1.8,frag:5},
+    {star:2.0,frag:15},{star:2.2,frag:15},{star:2.4,frag:15},{star:2.6,frag:15},{star:2.8,frag:15},
+    {star:3.0,frag:40},{star:3.2,frag:40},{star:3.4,frag:40},{star:3.6,frag:40},{star:3.8,frag:40},
+    {star:4.0,frag:100},{star:4.2,frag:100}
+  ];
+  function fragmentsBetween(a,b){
+    if (b<=a) return 0;
+    let sum=0;
+    for (const step of STEPS){
+      if (step.star>a && step.star<=b) sum += step.frag;
+    }
+    return sum;
   }
-  return sum;
-}
 
 
   function find(v){ return STAR.find(s => s.star === v) || STAR[0]; }
@@ -281,46 +280,41 @@ function fragmentsBetween(a,b){
 
   
 function compute(){
-  var hp  = parseFloat(document.getElementById('hp').value || "0");
-  var atk = parseFloat(document.getElementById('atk').value || "0");
-  var df  = parseFloat(document.getElementById('def').value || "0");
-  var s0  = parseFloat(document.getElementById('fromStar').value);
-  var s1  = parseFloat(document.getElementById('toStar').value);
+    const hp = parseFloat(document.getElementById('hp').value || "0");
+    const atk = parseFloat(document.getElementById('atk').value || "0");
+    const df  = parseFloat(document.getElementById('def').value || "0");
+    const s0  = parseFloat(document.getElementById('fromStar').value);
+    const s1  = parseFloat(document.getElementById('toStar').value);
 
-  // Expect either STAR or STAR_PCT + a find() helper defined by your original file.
-  var P0 = (typeof find==='function') ? find(s0).pct : 0;
-  var P1 = (typeof find==='function') ? find(s1).pct : 0;
-  var deltaPct = Math.max(0, P1 - P0);
-  var mult = 1 + (deltaPct/100);
+    const P0 = find(s0).pct;
+    const P1 = find(s1).pct;
+    const deltaPct = Math.max(0, P1 - P0);
 
-  // Fragment-based math (no UI changes)
-  var frags = fragmentsBetween(s0, s1);
-  var dupes = Math.ceil(frags / 10);
+    // New: fragment math by step costs (1 dupe = 10 frags)
+    const frags = fragmentsBetween(s0, s1);
+    const dupes = Math.ceil(frags / 10);
 
-  // Update numbers (IDs expected from your original file)
-  var set = function(id, v){ var el=document.getElementById(id); if(el) el.textContent = v; };
-  var dd = function(n){
-    if(!isFinite(n)) return "—";
-    if(Math.abs(n)>=1e9) return (n/1e9).toFixed(2)+"B";
-    if(Math.abs(n)>=1e6) return (n/1e6).toFixed(2)+"M";
-    if(Math.abs(n)>=1e3) return (n/1e3).toFixed(2)+"K";
-    return n.toLocaleString();
-  };
+    const mult = 1 + (deltaPct/100);
+    const hp1 = hp * mult, atk1 = atk * mult, df1 = df * mult;
 
-  set('pct',  deltaPct + "%");
-  set('frags', dd(frags));
-  set('dupes', dupes);
+    document.getElementById('pct').textContent = `${deltaPct}%`;
+    document.getElementById('dupes').textContent = dupes;
+    document.getElementById('frags').textContent = (function(n){
+      if(!isFinite(n)) return "—";
+      if(Math.abs(n)>=1e9) return (n/1e9).toFixed(2)+"B";
+      if(Math.abs(n)>=1e6) return (n/1e6).toFixed(2)+"M";
+      if(Math.abs(n)>=1e3) return (n/1e3).toFixed(2)+"K";
+      return n.toLocaleString();
+    })(frags);
 
-  set('hp0', dd(hp));
-  set('atk0', dd(atk));
-  set('def0', dd(df));
+    document.getElementById('hp0').textContent = hp.toLocaleString();
+    document.getElementById('atk0').textContent= atk.toLocaleString();
+    document.getElementById('def0').textContent= df.toLocaleString();
+    document.getElementById('hp1').textContent = hp1.toLocaleString();
+    document.getElementById('atk1').textContent= atk1.toLocaleString();
+    document.getElementById('def1').textContent= df1.toLocaleString();
 
-  set('hp1', dd(hp * mult));
-  set('atk1', dd(atk * mult));
-  set('def1', dd(df * mult));
-
-  // Call your original icon updater if present
-  if (typeof updateStarIcon === 'function') updateStarIcon();
+    if (typeof updateStarIcon === 'function') updateStarIcon();
 }
 %`;
     document.getElementById('dupes').textContent = dupes;
@@ -348,6 +342,25 @@ function compute(){
   document.getElementById('reset').addEventListener('click', resetAll);
   document.getElementById('toStar').addEventListener('change', updateStarIcon);
   updateStarIcon();
+
+// Safe binder to ensure compute() runs
+(function(){
+  function safe(){ try{ compute(); }catch(e){} }
+  var btn=document.getElementById('calc'); if(btn) btn.addEventListener('click', safe);
+  var rst=document.getElementById('reset'); if(rst) rst.addEventListener('click', function(){
+    ['hp','atk','def'].forEach(id=>{var el=document.getElementById(id); if(el) el.value="";});
+    var fs=document.getElementById('fromStar'); if(fs) fs.value="0.0";
+    var ts=document.getElementById('toStar');   if(ts) ts.value="0.0";
+    safe();
+  });
+  ['hp','atk','def','fromStar','toStar'].forEach(function(id){
+    var el=document.getElementById(id); if(!el) return;
+    el.addEventListener('input', safe);
+    el.addEventListener('change', safe);
+  });
+  safe();
+})();
+
 </script>
 </body>
 </html>

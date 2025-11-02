@@ -118,7 +118,7 @@
             <div class="field">
               <label for="fromStar">Current Star</label>
               <select id="fromStar">
-                <option value="0.0">0★</option><option value="0.2">0.2★</option><option value="0.4">0.4★</option><option value="0.6">0.6★</option><option value="0.8">0.8★</option><option value="1.0">1★</option><option value="1.2">1.2★</option><option value="1.4">1.4★</option><option value="1.6">1.6★</option><option value="1.8">1.8★</option><option value="2.0">2★</option><option value="2.2">2.2★</option><option value="2.4">2.4★</option><option value="2.6">2.6★</option><option value="2.8">2.8★</option><option value="3.0">3★</option><option value="3.2">3.2★</option><option value="3.4">3.4★</option><option value="3.6">3.6★</option><option value="3.8">3.8★</option><option value="4.0">4★</option><option value="4.2">4.2★</option>
+                <option value="0.0">0★</option><option value="0.2">0.2★</option><option value="0.4">0.4★</option><option value="0.6">0.6★</option><option value="0.8">0.8★ (Dupe 1)</option><option value="1.0">1★</option><option value="1.2">1.2★ (Dupe 2)</option><option value="1.4">1.4★</option><option value="1.6">1.6★ (Dupe 3)</option><option value="1.8">1.8★</option><option value="2.0">2★</option><option value="2.2">2.2★</option><option value="2.4">2.4★</option><option value="2.6">2.6★</option><option value="2.8">2.8★</option><option value="3.0">3★</option><option value="3.2">3.2★</option><option value="3.4">3.4★</option><option value="3.6">3.6★</option><option value="3.8">3.8★</option><option value="4.0">4★</option><option value="4.2">4.2★</option>
               </select>
             </div>
             <div class="field">
@@ -202,6 +202,24 @@
     {star:4.0, cum:215, pct:250},
     {star:4.2, cum:266, pct:259},
   ];
+  // Fragment cost per step (your confirmed rules)
+  const STEPS = [
+    {star:0.2,frag:2},{star:0.4,frag:2},{star:0.6,frag:2},{star:0.8,frag:2},
+    {star:1.0,frag:5},{star:1.2,frag:5},{star:1.4,frag:5},{star:1.6,frag:5},{star:1.8,frag:5},
+    {star:2.0,frag:15},{star:2.2,frag:15},{star:2.4,frag:15},{star:2.6,frag:15},{star:2.8,frag:15},
+    {star:3.0,frag:40},{star:3.2,frag:40},{star:3.4,frag:40},{star:3.6,frag:40},{star:3.8,frag:40},
+    {star:4.0,frag:100},{star:4.2,frag:100}
+  ];
+
+  function fragmentsBetween(a,b){
+    if (b <= a) return 0;
+    let sum = 0;
+    for (const step of STEPS){
+      if (step.star > a && step.star <= b) sum += step.frag;
+    }
+    return sum;
+  }
+
 
   function find(v){ return STAR.find(s => s.star === v) || STAR[0]; }
 
@@ -261,36 +279,37 @@
     document.getElementById('starIcon').innerHTML = icon;
   }
 
-  
-function fragmentsBetween(a,b){
-  if(b<=a) return 0;
-  var sum=0;
-  for(var i=0;i<STEPS.length;i++){
-    var r=STEPS[i];
-    if(r.star>a && r.star<=b) sum+=r.frag;
-  }
-  return sum;
-}
-function compute(){
+  function compute(){
     const hp = parseFloat(document.getElementById('hp').value || "0");
     const atk = parseFloat(document.getElementById('atk').value || "0");
-    const df = parseFloat(document.getElementById('def').value || "0");
-    const s0 = parseFloat(document.getElementById('fromStar').value);
-    const s1 = parseFloat(document.getElementById('toStar').value);
+    const df  = parseFloat(document.getElementById('def').value || "0");
+    const s0  = parseFloat(document.getElementById('fromStar').value);
+    const s1  = parseFloat(document.getElementById('toStar').value);
 
     const P0 = find(s0).pct;
     const P1 = find(s1).pct;
     const deltaPct = Math.max(0, P1 - P0);
-
-    const C0 = find(s0).cum;
-    const C1 = find(s1).cum;
-    const dupes = Math.ceil(frags/10);
-    const frags = dupes * 10;
-
     const mult = 1 + (deltaPct/100);
+
+    // Fragment math by step costs
+    const frags = fragmentsBetween(s0, s1);
+    const dupes = Math.ceil(frags / 10);
+
     const hp1 = hp * mult, atk1 = atk * mult, df1 = df * mult;
 
-    document.getElementById('pct').textContent = `${deltaPct}%`;
+    document.getElementById('pct').textContent   = `${deltaPct}%`;
+    document.getElementById('dupes').textContent = dupes;
+    document.getElementById('frags').textContent = dd(frags);
+
+    document.getElementById('hp0').textContent = dd(hp);
+    document.getElementById('atk0').textContent= dd(atk);
+    document.getElementById('def0').textContent= dd(df);
+    document.getElementById('hp1').textContent = dd(hp1);
+    document.getElementById('atk1').textContent= dd(atk1);
+    document.getElementById('def1').textContent= dd(df1);
+
+    updateStarIcon();
+}%`;
     document.getElementById('dupes').textContent = dupes;
     document.getElementById('frags').textContent = dd(frags);
 
@@ -316,24 +335,22 @@ function compute(){
   document.getElementById('reset').addEventListener('click', resetAll);
   document.getElementById('toStar').addEventListener('change', updateStarIcon);
   updateStarIcon();
-
-document.addEventListener('DOMContentLoaded', function(){
-  var ids=['hp','atk','def','fromStar','toStar'];
-  for(var i=0;i<ids.length;i++){
-    var el=document.getElementById(ids[i]);
-    if(el){ el.addEventListener('input', compute); el.addEventListener('change', compute); }
-  }
-  var c=document.getElementById('calc'); if(c){ c.addEventListener('click', compute); }
-  var r=document.getElementById('reset'); if(r){ r.addEventListener('click', function(){
-    if(document.getElementById('hp')) document.getElementById('hp').value='';
-    if(document.getElementById('atk')) document.getElementById('atk').value='';
-    if(document.getElementById('def')) document.getElementById('def').value='';
-    if(document.getElementById('fromStar')) document.getElementById('fromStar').value='0.0';
-    if(document.getElementById('toStar')) document.getElementById('toStar').value='0.0';
-    if(typeof compute==='function') compute();
-  }); }
-  if(typeof compute==='function') compute();
-});
 </script>
+
+<script>
+// Safety shim: ensure Calculate always runs compute()
+(function(){
+  function safeRun(){ try{ compute(); }catch(e){} }
+  var btn=document.getElementById('calc'); if(btn) btn.addEventListener('click', safeRun);
+  ['hp','atk','def','fromStar','toStar'].forEach(function(id){
+    var el=document.getElementById(id); if(!el) return;
+    el.addEventListener('input', safeRun);
+    el.addEventListener('change', safeRun);
+  });
+  // initial
+  safeRun();
+})();
+</script>
+
 </body>
 </html>
